@@ -3,16 +3,11 @@ import {
   Icon,
   LaunchType,
   MenuBarExtra,
-  Toast,
   launchCommand,
   open,
-  showToast,
+  showHUD,
 } from "@raycast/api";
-import {
-  showFailureToast,
-  useCachedPromise,
-  useLocalStorage,
-} from "@raycast/utils";
+import { useCachedPromise, useLocalStorage } from "@raycast/utils";
 import { useEffect, useState } from "react";
 import {
   Timesheet,
@@ -51,6 +46,9 @@ function menuBarIcon(
   return Icon.Clock;
 }
 
+const describe = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
 /** Re-render once a second so the elapsed time ticks while the menu is open. */
 function useTicker() {
   const [, setTick] = useState(0);
@@ -67,7 +65,9 @@ export default function Command() {
     [],
     {
       keepPreviousData: true,
-      failureToastOptions: { title: "Could not reach Kimai" },
+      // No toast on failure: on a background refresh the Toast API throws outright,
+      // and a menu bar command must never crash on a temporarily unreachable server.
+      onError: () => undefined,
     },
   );
 
@@ -89,25 +89,17 @@ export default function Command() {
 
   async function stop(entry: Timesheet) {
     try {
-      await showToast({
-        style: Toast.Style.Animated,
-        title: "Stopping timer…",
-      });
       const stopped = await stopTimer(entry.id);
       await paused.removeValue();
-      await showToast({
-        style: Toast.Style.Success,
-        title: `Stopped after ${formatDuration(stopped.duration)}`,
-      });
       refresh();
+      await showHUD(`⏹ Stopped after ${formatDuration(stopped.duration)}`);
     } catch (error) {
-      await showFailureToast(error, { title: "Could not stop the timer" });
+      await showHUD(`⚠︎ Could not stop the timer — ${describe(error)}`);
     }
   }
 
   async function pause(entry: Timesheet) {
     try {
-      await showToast({ style: Toast.Style.Animated, title: "Pausing…" });
       const stopped = await stopTimer(entry.id);
       await paused.setValue({
         id: entry.id,
@@ -115,33 +107,21 @@ export default function Command() {
         subtitle: timesheetSubtitle(entry),
         duration: stopped.duration,
       });
-      await showToast({
-        style: Toast.Style.Success,
-        title: `Paused after ${formatDuration(stopped.duration)}`,
-        message: timesheetSubtitle(entry),
-      });
       refresh();
+      await showHUD(`⏸ Paused at ${formatDuration(stopped.duration)}`);
     } catch (error) {
-      await showFailureToast(error, { title: "Could not pause the timer" });
+      await showHUD(`⚠︎ Could not pause the timer — ${describe(error)}`);
     }
   }
 
   async function resume(id: number, label: string) {
     try {
-      await showToast({
-        style: Toast.Style.Animated,
-        title: "Starting timer…",
-      });
       await restartTimer(id);
       await paused.removeValue();
-      await showToast({
-        style: Toast.Style.Success,
-        title: "Timer started",
-        message: label,
-      });
       refresh();
+      await showHUD(`▶ ${label}`);
     } catch (error) {
-      await showFailureToast(error, { title: "Could not continue this task" });
+      await showHUD(`⚠︎ Could not continue this task — ${describe(error)}`);
     }
   }
 

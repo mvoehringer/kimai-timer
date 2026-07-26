@@ -29,6 +29,10 @@ Kimai requires HTTPS for API calls. A trailing `/api` in the URL is stripped aut
 - **Pause is a stop plus a bookmark.** Kimai has no pause endpoint, so pausing stops the entry
   and pins it under "Paused" for a one-click resume. Resuming creates a new entry via
   `/timesheets/{id}/restart` — the paused time stays booked, it is not overwritten.
+- **The menu bar command uses HUDs, not toasts.** Raycast throws
+  `Toast API is not available when command is launched in background` if a menu item action
+  runs in a menu that was rendered by a background refresh — which is the normal case. Every
+  other command is user-initiated and keeps toasts.
 - **Seconds live in the menu, not the status bar.** The status bar title only changes on
   background refresh (every minute), so it shows `h:mm` — a seconds display there would be
   stale. Open the menu and the elapsed time ticks once a second. Colour works the same way:
