@@ -13,7 +13,7 @@
       "type": "textfield",
       "required": true,
       "title": "Kimai URL",
-      "description": "Base URL of your Kimai instance, without /api.",
+      "description": "Base URL of your Kimai instance. A trailing /api is stripped automatically.",
       "placeholder": "https://kimai.example.com"
     },
     {

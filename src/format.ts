@@ -3,6 +3,20 @@
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
+ * Normalises whatever ends up in the "Kimai URL" preference to the instance root,
+ * because `/api` is appended per request. Handles the four things people actually
+ * paste: a bare hostname, a trailing slash, the API root, and the API docs URL.
+ * A URL ending in `/api` is the most common cause of a blanket 404.
+ */
+export function normalizeBaseUrl(input: string): string {
+  const trimmed = input.trim();
+  const withScheme = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  return withScheme.replace(/\/+$/, "").replace(/\/api(\/doc)?$/i, "");
+}
+
+/**
  * Kimai returns ISO 8601 but expects HTML5 "local date and time" on POST/PATCH:
  * `yyyy-MM-ddTHH:mm:ss` with no timezone. Sending a real ISO string here shifts
  * every entry by the UTC offset.

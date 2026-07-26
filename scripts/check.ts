@@ -1,11 +1,32 @@
 /** Self-check for the pure helpers: `bun run scripts/check.ts`. No test framework on purpose. */
 import assert from "node:assert/strict";
-import { formatClock, formatDuration, formatTotal, startOfWeek, toKimaiDate } from "../src/format";
+import {
+  formatClock,
+  formatDuration,
+  formatTotal,
+  normalizeBaseUrl,
+  startOfWeek,
+  toKimaiDate,
+} from "../src/format";
 
 // Kimai wants local time without a timezone — an ISO string here shifts entries by the UTC offset.
 assert.equal(toKimaiDate(new Date(2026, 6, 26, 9, 5, 3)), "2026-07-26T09:05:03");
 assert.equal(toKimaiDate(new Date(2026, 0, 1, 0, 0, 0)), "2026-01-01T00:00:00");
 assert.match(toKimaiDate(new Date()), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+
+// A URL entered with /api produced 404s on every call — must normalise back to the root.
+assert.equal(normalizeBaseUrl("https://kimai.example.com/api"), "https://kimai.example.com");
+assert.equal(normalizeBaseUrl("https://kimai.example.com/api/"), "https://kimai.example.com");
+assert.equal(normalizeBaseUrl("https://kimai.example.com/API"), "https://kimai.example.com");
+assert.equal(normalizeBaseUrl("https://kimai.example.com/api/doc"), "https://kimai.example.com");
+assert.equal(normalizeBaseUrl("https://host/kimai/api/doc/"), "https://host/kimai");
+// …while leaving a correct URL, a bare hostname and stray whitespace alone.
+assert.equal(normalizeBaseUrl("https://kimai.example.com"), "https://kimai.example.com");
+assert.equal(normalizeBaseUrl("  kimai.example.com  "), "https://kimai.example.com");
+assert.equal(normalizeBaseUrl("http://localhost:8001/"), "http://localhost:8001");
+assert.equal(normalizeBaseUrl("https://host/kimai"), "https://host/kimai");
+// "api" as part of a real path segment must survive.
+assert.equal(normalizeBaseUrl("https://host/rapid"), "https://host/rapid");
 
 assert.equal(formatDuration(0), "0:00");
 assert.equal(formatDuration(59), "0:59");

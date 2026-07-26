@@ -1,5 +1,5 @@
 import { getPreferenceValues } from "@raycast/api";
-import { toKimaiDate } from "./format";
+import { normalizeBaseUrl, toKimaiDate } from "./format";
 
 export interface Customer {
   id: number;
@@ -39,18 +39,7 @@ interface Preferences {
 
 const prefs = getPreferenceValues<Preferences>();
 
-/**
- * People paste the instance root, a trailing slash, a bare hostname, or the URL of the
- * API docs. Everything below normalises to the root, because `/api` is appended per call.
- */
-export const baseUrl = (
-  prefs.baseUrl.match(/^https?:\/\//)
-    ? prefs.baseUrl
-    : `https://${prefs.baseUrl}`
-)
-  .trim()
-  .replace(/\/+$/, "")
-  .replace(/\/api(\/doc)?$/, "");
+export const baseUrl = normalizeBaseUrl(prefs.baseUrl);
 
 type Query = Record<string, string | number | boolean | undefined>;
 
