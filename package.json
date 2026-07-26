@@ -1,0 +1,91 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "kimai",
+  "title": "Kimai",
+  "description": "Track time in Kimai without leaving Raycast: start/stop timers, browse and edit timesheets, and see weekly totals.",
+  "icon": "icon.png",
+  "author": "michaelvohringer",
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "preferences": [
+    {
+      "name": "baseUrl",
+      "type": "textfield",
+      "required": true,
+      "title": "Kimai URL",
+      "description": "Base URL of your Kimai instance, without /api.",
+      "placeholder": "https://kimai.example.com"
+    },
+    {
+      "name": "apiToken",
+      "type": "password",
+      "required": true,
+      "title": "API Token",
+      "description": "Create one in Kimai under User → API Access."
+    }
+  ],
+  "commands": [
+    {
+      "name": "menubar-timer",
+      "title": "Running Timer",
+      "subtitle": "Kimai",
+      "description": "Show the running timer in the menu bar and stop it from there.",
+      "mode": "menu-bar",
+      "interval": "1m"
+    },
+    {
+      "name": "start-timer",
+      "title": "Start Timer",
+      "subtitle": "Kimai",
+      "description": "Start a new timer for a project and activity.",
+      "mode": "view"
+    },
+    {
+      "name": "stop-timer",
+      "title": "Stop Timer",
+      "subtitle": "Kimai",
+      "description": "Stop every running timer.",
+      "mode": "no-view"
+    },
+    {
+      "name": "timesheets",
+      "title": "Timesheets",
+      "subtitle": "Kimai",
+      "description": "Browse, edit, restart and delete your time entries.",
+      "mode": "view"
+    },
+    {
+      "name": "projects",
+      "title": "Browse Projects",
+      "subtitle": "Kimai",
+      "description": "Browse customers, projects and activities and start a timer from them.",
+      "mode": "view"
+    },
+    {
+      "name": "report",
+      "title": "Time Report",
+      "subtitle": "Kimai",
+      "description": "Totals per project for today, this week and this month.",
+      "mode": "view"
+    }
+  ],
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "check": "bun run scripts/check.ts"
+  },
+  "dependencies": {
+    "@raycast/api": "^1.104.23",
+    "@raycast/utils": "^2.2.7"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.2.0",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3"
+  }
+}
