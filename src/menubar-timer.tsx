@@ -33,6 +33,18 @@ interface PausedTask {
   id: number;
   title: string;
   subtitle: string;
+  /** Seconds booked before pausing — shown in the menu bar so the state stays visible. */
+  duration: number;
+}
+
+/** Three distinguishable states at a glance: running, paused, idle. */
+function menuBarIcon(
+  running: Timesheet | undefined,
+  paused: PausedTask | undefined,
+) {
+  if (running) return { source: Icon.Stopwatch, tintColor: Color.Green };
+  if (paused) return { source: Icon.Pause, tintColor: Color.Yellow };
+  return { source: Icon.Clock, tintColor: Color.SecondaryText };
 }
 
 export default function Command() {
@@ -87,6 +99,7 @@ export default function Command() {
         id: entry.id,
         title: timesheetTitle(entry),
         subtitle: timesheetSubtitle(entry),
+        duration: stopped.duration,
       });
       await showToast({
         style: Toast.Style.Success,
@@ -126,13 +139,19 @@ export default function Command() {
 
   return (
     <MenuBarExtra
-      icon={
+      icon={menuBarIcon(running, pausedTask)}
+      title={
         running
-          ? { source: Icon.Stopwatch, tintColor: Color.Green }
-          : { source: Icon.Clock, tintColor: Color.SecondaryText }
+          ? formatClock(elapsedSeconds(running))
+          : pausedTask && formatClock(pausedTask.duration)
       }
-      title={running ? formatClock(elapsedSeconds(running)) : undefined}
-      tooltip={running ? timesheetSubtitle(running) : "No running timer"}
+      tooltip={
+        running
+          ? timesheetSubtitle(running)
+          : pausedTask
+            ? `Paused: ${pausedTask.subtitle}`
+            : "No running timer"
+      }
       isLoading={isLoading}
     >
       {data?.map((entry) => (
@@ -151,7 +170,9 @@ export default function Command() {
         </MenuBarExtra.Section>
       ))}
       {pausedTask && (
-        <MenuBarExtra.Section title="Paused">
+        <MenuBarExtra.Section
+          title={`Paused · ${formatClock(pausedTask.duration)}`}
+        >
           <MenuBarExtra.Item
             icon={{ source: Icon.Play, tintColor: Color.Green }}
             title={pausedTask.title}

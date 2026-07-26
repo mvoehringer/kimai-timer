@@ -84,7 +84,8 @@ export function formatDuration(seconds: number): string {
  * refreshes every 10s, so the value jumps in steps rather than ticking.
  */
 export function formatClock(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
+  // A paused task stored by an older version has no duration — never render NaN.
+  const s = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
   return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 }
 
