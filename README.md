@@ -1,4 +1,4 @@
-# Kimai for Raycast
+# Kimai Timer for Raycast
 
 Track time in [Kimai](https://www.kimai.org) without leaving Raycast.
 
