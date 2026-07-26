@@ -2,7 +2,6 @@ import { LaunchType, Toast, launchCommand, showToast } from "@raycast/api";
 import { showFailureToast } from "@raycast/utils";
 import { getActiveTimers, stopRunningTimers, timesheetSubtitle } from "./kimai";
 import { formatDuration } from "./format";
-import { t } from "./i18n";
 
 export default async function Command() {
   try {
@@ -10,25 +9,25 @@ export default async function Command() {
     if (active.length === 0) {
       await showToast({
         style: Toast.Style.Failure,
-        title: t.noRunningTimer,
+        title: "No running timer",
       });
       return;
     }
 
-    await showToast({ style: Toast.Style.Animated, title: t.stoppingTimer });
+    await showToast({ style: Toast.Style.Animated, title: "Stopping timer…" });
     const stopped = await stopRunningTimers();
 
     await showToast({
       style: Toast.Style.Success,
       title:
         stopped.length === 1
-          ? t.stoppedAfter(formatDuration(stopped[0].duration))
-          : t.stoppedCount(stopped.length),
+          ? `Stopped after ${formatDuration(stopped[0].duration)}`
+          : `Stopped ${stopped.length} timers`,
       message: stopped.length === 1 ? timesheetSubtitle(stopped[0]) : undefined,
     });
     await refreshMenuBar();
   } catch (error) {
-    await showFailureToast(error, { title: t.couldNotStop });
+    await showFailureToast(error, { title: "Could not stop the timer" });
   }
 }
 

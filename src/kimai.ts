@@ -1,6 +1,5 @@
 import { getPreferenceValues } from "@raycast/api";
 import { normalizeBaseUrl, recentTasks, toKimaiDate } from "./format";
-import { t } from "./i18n";
 
 export interface Customer {
   id: number;
@@ -56,11 +55,13 @@ function withQuery(path: string, query?: Query): string {
 
 async function toError(res: Response, url: string): Promise<Error> {
   if (res.status === 401 || res.status === 403) {
-    return new Error(t.tokenRejected);
+    return new Error(
+      "Kimai rejected the API token — check it under User → API Access",
+    );
   }
   if (res.status === 404) {
     // A wrong "Kimai URL" preference looks exactly like this; the token would give 401.
-    return new Error(t.notFound(url));
+    return new Error(`Not found: ${url} — check the Kimai URL preference`);
   }
   const body = await res.text().catch(() => "");
   let detail = body;
@@ -216,7 +217,7 @@ export const customerName = (project: Project | undefined) =>
     : undefined;
 
 export function timesheetTitle(entry: Timesheet): string {
-  return entry.description?.trim() || entry.activity?.name || t.untitled;
+  return entry.description?.trim() || entry.activity?.name || "Untitled";
 }
 
 export function timesheetSubtitle(entry: Timesheet): string {

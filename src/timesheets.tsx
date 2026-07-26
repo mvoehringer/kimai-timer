@@ -26,7 +26,6 @@ import {
   timesheetTitle,
   updateTimesheet,
 } from "./kimai";
-import { locale, t } from "./i18n";
 import { formatDuration, formatTotal, startOfDay } from "./format";
 import { refreshMenuBar } from "./stop-timer";
 
@@ -37,7 +36,7 @@ export default function Command() {
     [searchText],
     {
       keepPreviousData: true,
-      failureToastOptions: { title: t.couldNotLoadTimesheets },
+      failureToastOptions: { title: "Could not load timesheets" },
     },
   );
 
@@ -48,13 +47,13 @@ export default function Command() {
       isLoading={isLoading}
       searchText={searchText}
       onSearchTextChange={setSearchText}
-      searchBarPlaceholder={t.searchTimesheets}
+      searchBarPlaceholder="Search descriptions, projects, activities…"
       throttle
     >
       <List.EmptyView
         icon={Icon.Clock}
-        title={t.noTimeEntries}
-        description={t.noTimeEntriesHint}
+        title="No time entries"
+        description="Start a timer to see entries here."
       />
       {groups.map(([label, entries]) => (
         <List.Section
@@ -83,14 +82,15 @@ function TimesheetItem({
   const running = !entry.end;
 
   async function run(
-    title: string,
+    progress: string,
+    success: string,
     failure: string,
     action: () => Promise<unknown>,
   ) {
     try {
-      await showToast({ style: Toast.Style.Animated, title: `${title}…` });
+      await showToast({ style: Toast.Style.Animated, title: progress });
       await action();
-      await showToast({ style: Toast.Style.Success, title });
+      await showToast({ style: Toast.Style.Success, title: success });
       onChange();
       await refreshMenuBar();
     } catch (error) {
@@ -100,13 +100,16 @@ function TimesheetItem({
 
   async function remove() {
     const confirmed = await confirmAlert({
-      title: t.deleteConfirmTitle,
+      title: "Delete time entry?",
       message: timesheetSubtitle(entry),
-      primaryAction: { title: t.delete, style: Alert.ActionStyle.Destructive },
+      primaryAction: { title: "Delete", style: Alert.ActionStyle.Destructive },
     });
     if (confirmed)
-      await run(t.entryDeleted, t.couldNotSave, () =>
-        deleteTimesheet(entry.id),
+      await run(
+        "Deleting entry…",
+        "Entry deleted",
+        "Could not delete the entry",
+        () => deleteTimesheet(entry.id),
       );
   }
 
@@ -133,35 +136,46 @@ function TimesheetItem({
             {running ? (
               <Action
                 icon={Icon.Stop}
-                title={t.stopTimer}
+                title="Stop Timer"
                 onAction={() =>
-                  run(t.timerStopped, t.couldNotStop, () => stopTimer(entry.id))
+                  run(
+                    "Stopping timer…",
+                    "Timer stopped",
+                    "Could not stop the timer",
+                    () => stopTimer(entry.id),
+                  )
                 }
               />
             ) : (
               <Action
                 icon={Icon.Play}
-                title={t.restartTimer}
+                title="Restart Timer"
                 onAction={() =>
-                  run(t.timerRestarted, t.couldNotStart, () =>
-                    restartTimer(entry.id),
+                  run(
+                    "Restarting timer…",
+                    "Timer restarted",
+                    "Could not start the timer",
+                    () => restartTimer(entry.id),
                   )
                 }
               />
             )}
             <Action.Push
               icon={Icon.Pencil}
-              title={t.editEntry}
+              title="Edit Entry"
               shortcut={Keyboard.Shortcut.Common.Edit}
               target={<EditForm entry={entry} onSaved={onChange} />}
             />
             <Action
               icon={Icon.Duplicate}
-              title={t.duplicateEntry}
+              title="Duplicate Entry"
               shortcut={{ modifiers: ["cmd"], key: "d" }}
               onAction={() =>
-                run(t.entryDuplicated, t.couldNotSave, () =>
-                  duplicateTimesheet(entry.id),
+                run(
+                  "Duplicating entry…",
+                  "Entry duplicated",
+                  "Could not duplicate the entry",
+                  () => duplicateTimesheet(entry.id),
                 )
               }
             />
@@ -169,15 +183,15 @@ function TimesheetItem({
           <ActionPanel.Section>
             <Action.OpenInBrowser
               url={`${baseUrl}/en/timesheet/`}
-              title={t.openKimai}
+              title="Open Kimai"
             />
             <Action.CopyToClipboard
               content={timesheetTitle(entry)}
-              title={t.copyDescription}
+              title="Copy Description"
             />
             <Action
               icon={Icon.Trash}
-              title={t.deleteEntry}
+              title="Delete Entry"
               style={Action.Style.Destructive}
               shortcut={{ modifiers: ["ctrl"], key: "x" }}
               onAction={remove}
@@ -205,17 +219,17 @@ function EditForm({
   }) {
     setSaving(true);
     try {
-      await showToast({ style: Toast.Style.Animated, title: t.saving });
+      await showToast({ style: Toast.Style.Animated, title: "Saving…" });
       await updateTimesheet(entry.id, {
         description: values.description,
         begin: values.begin ?? undefined,
         // Leave a running entry running: only send `end` if it already had one.
         end: entry.end ? values.end : undefined,
       });
-      await showToast({ style: Toast.Style.Success, title: t.entrySaved });
+      await showToast({ style: Toast.Style.Success, title: "Entry saved" });
       onSaved();
     } catch (error) {
-      await showFailureToast(error, { title: t.couldNotSave });
+      await showFailureToast(error, { title: "Could not save the entry" });
     } finally {
       setSaving(false);
     }
@@ -228,28 +242,28 @@ function EditForm({
         <ActionPanel>
           <Action.SubmitForm
             icon={Icon.Check}
-            title={t.saveEntry}
+            title="Save Entry"
             onSubmit={submit}
           />
         </ActionPanel>
       }
     >
-      <Form.Description title={t.project} text={timesheetSubtitle(entry)} />
+      <Form.Description title="Project" text={timesheetSubtitle(entry)} />
       <Form.TextField
         id="description"
-        title={t.description}
+        title="Description"
         defaultValue={entry.description ?? ""}
       />
       <Form.DatePicker
         id="begin"
-        title={t.begin}
+        title="Begin"
         type={Form.DatePicker.Type.DateTime}
         defaultValue={new Date(entry.begin)}
       />
       {entry.end ? (
         <Form.DatePicker
           id="end"
-          title={t.end}
+          title="End"
           type={Form.DatePicker.Type.DateTime}
           defaultValue={new Date(entry.end)}
         />
@@ -267,10 +281,10 @@ function groupByDay(entries: Timesheet[]): [string, Timesheet[]][] {
     const diffDays = Math.round((today - day.getTime()) / 86_400_000);
     const label =
       diffDays === 0
-        ? t.today
+        ? "Today"
         : diffDays === 1
-          ? t.yesterday
-          : day.toLocaleDateString(locale, { dateStyle: "full" });
+          ? "Yesterday"
+          : day.toLocaleDateString(undefined, { dateStyle: "full" });
     groups.set(label, [...(groups.get(label) ?? []), entry]);
   }
 

@@ -20,7 +20,6 @@ import {
   listTags,
   startTimer,
 } from "./kimai";
-import { t } from "./i18n";
 import { refreshMenuBar } from "./stop-timer";
 
 export default function Command() {
@@ -32,10 +31,10 @@ export function StartTimerForm({
   activityId,
 }: { projectId?: number; activityId?: number } = {}) {
   const projects = useCachedPromise(listProjectsWithCustomers, [], {
-    failureToastOptions: { title: t.couldNotLoadProjects },
+    failureToastOptions: { title: "Could not load projects" },
   });
   const tags = useCachedPromise(listTags, [], {
-    failureToastOptions: { title: t.couldNotLoadTags },
+    failureToastOptions: { title: "Could not load tags" },
   });
   const lastProject = useLocalStorage<string>("last-project");
   const lastActivity = useLocalStorage<string>("last-activity");
@@ -51,7 +50,7 @@ export function StartTimerForm({
     [project ? Number(project) : undefined],
     {
       execute: project !== "",
-      failureToastOptions: { title: t.couldNotLoadActivities },
+      failureToastOptions: { title: "Could not load activities" },
     },
   );
 
@@ -79,7 +78,7 @@ export function StartTimerForm({
     if (!project || !activity) {
       await showToast({
         style: Toast.Style.Failure,
-        title: t.pickProjectAndActivity,
+        title: "Pick a project and an activity",
       });
       return;
     }
@@ -87,7 +86,7 @@ export function StartTimerForm({
     try {
       await showToast({
         style: Toast.Style.Animated,
-        title: t.startingTimer,
+        title: "Starting timer…",
       });
       await startTimer(
         Number(project),
@@ -99,11 +98,11 @@ export function StartTimerForm({
         lastProject.setValue(project),
         lastActivity.setValue(activity),
       ]);
-      await showToast({ style: Toast.Style.Success, title: t.timerStarted });
+      await showToast({ style: Toast.Style.Success, title: "Timer started" });
       await refreshMenuBar();
       await popToRoot();
     } catch (error) {
-      await showFailureToast(error, { title: t.couldNotStart });
+      await showFailureToast(error, { title: "Could not start the timer" });
     } finally {
       setSubmitting(false);
     }
@@ -116,7 +115,7 @@ export function StartTimerForm({
         <ActionPanel>
           <Action.SubmitForm
             icon={Icon.Play}
-            title={t.startTimer}
+            title="Start Timer"
             onSubmit={submit}
           />
         </ActionPanel>
@@ -124,7 +123,7 @@ export function StartTimerForm({
     >
       <Form.Dropdown
         id="project"
-        title={t.project}
+        title="Project"
         value={project}
         onChange={setProject}
         storeValue={false}
@@ -140,7 +139,7 @@ export function StartTimerForm({
 
       <Form.Dropdown
         id="activity"
-        title={t.activity}
+        title="Activity"
         value={activity}
         onChange={setActivity}
       >
@@ -151,11 +150,11 @@ export function StartTimerForm({
 
       <Form.TextField
         id="description"
-        title={t.description}
-        placeholder={t.descriptionPlaceholder}
+        title="Description"
+        placeholder="What are you working on?"
       />
 
-      <Form.TagPicker id="tags" title={t.tags}>
+      <Form.TagPicker id="tags" title="Tags">
         {tags.data?.map((tag) => (
           <Form.TagPicker.Item key={tag} value={tag} title={tag} />
         ))}
