@@ -1,6 +1,6 @@
 import { LaunchType, Toast, launchCommand, showToast } from "@raycast/api";
 import { showFailureToast } from "@raycast/utils";
-import { getActiveTimers, stopTimer, timesheetSubtitle } from "./kimai";
+import { getActiveTimers, stopRunningTimers, timesheetSubtitle } from "./kimai";
 import { formatDuration } from "./format";
 
 export default async function Command() {
@@ -15,9 +15,7 @@ export default async function Command() {
     }
 
     await showToast({ style: Toast.Style.Animated, title: "Stopping timer…" });
-    const stopped = await Promise.all(
-      active.map((entry) => stopTimer(entry.id)),
-    );
+    const stopped = await stopRunningTimers();
 
     await showToast({
       style: Toast.Style.Success,

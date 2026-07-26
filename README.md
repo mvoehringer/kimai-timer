@@ -6,7 +6,7 @@ Track time in [Kimai](https://www.kimai.org) without leaving Raycast.
 
 | Command | Mode | What it does |
 | --- | --- | --- |
-| **Running Timer** | menu bar | Shows the running timer and its elapsed time; stop it from the menu. Refreshes every minute. |
+| **Running Timer** | menu bar | Shows the running timer and its elapsed time, plus the last 4 tasks to continue. Refreshes every minute. |
 | **Start Timer** | view | Pick project + activity, add a description and tags. Remembers your last choice. |
 | **Stop Timer** | no view | Stops every running timer, no UI. |
 | **Timesheets** | view | Browse and search entries, grouped by day. Stop, restart, duplicate, edit, delete. |
@@ -20,7 +20,15 @@ Track time in [Kimai](https://www.kimai.org) without leaving Raycast.
    - **Kimai URL** — e.g. `https://kimai.example.com` (without `/api`)
    - **API Token** — the token from step 1
 
-Kimai requires HTTPS for API calls.
+Kimai requires HTTPS for API calls. A trailing `/api` in the URL is stripped automatically.
+
+## Behaviour worth knowing
+
+- **One timer at a time.** Starting or continuing a task stops whatever was running before,
+  regardless of how the Kimai server itself is configured.
+- **"Continue" lists distinct tasks.** Project *and* activity *and* description, so two pieces
+  of work on the same project stay separate entries. Kimai's own `/timesheets/recent` merges
+  them, which is why the list is built from `/timesheets`.
 
 ## Development
 

@@ -13,7 +13,7 @@ import {
   baseUrl,
   elapsedSeconds,
   getActiveTimers,
-  getRecentTimesheets,
+  getResumableTasks,
   restartTimer,
   stopTimer,
   timesheetSubtitle,
@@ -21,7 +21,7 @@ import {
 } from "./kimai";
 import { formatClock, formatDuration } from "./format";
 
-const RECENT_COUNT = 5;
+const RECENT_COUNT = 4;
 
 export default function Command() {
   const { data, isLoading, revalidate } = useCachedPromise(
@@ -33,7 +33,7 @@ export default function Command() {
     },
   );
 
-  const recent = useCachedPromise(getRecentTimesheets, [RECENT_COUNT], {
+  const recent = useCachedPromise(getResumableTasks, [RECENT_COUNT], {
     keepPreviousData: true,
     // The running timer already has its own section, and a failure here must not
     // take down the menu bar — the active timer is what matters.
@@ -82,10 +82,7 @@ export default function Command() {
     }
   }
 
-  const activeIds = new Set(data?.map((entry) => entry.id));
-  const resumable = (recent.data ?? [])
-    .filter((entry) => entry.end && !activeIds.has(entry.id))
-    .slice(0, RECENT_COUNT);
+  const resumable = recent.data ?? [];
 
   return (
     <MenuBarExtra

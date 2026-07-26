@@ -5,6 +5,8 @@ import {
   formatDuration,
   formatTotal,
   normalizeBaseUrl,
+  recentTasks,
+  taskKey,
   startOfWeek,
   toKimaiDate,
 } from "../src/format";
@@ -13,6 +15,38 @@ import {
 assert.equal(toKimaiDate(new Date(2026, 6, 26, 9, 5, 3)), "2026-07-26T09:05:03");
 assert.equal(toKimaiDate(new Date(2026, 0, 1, 0, 0, 0)), "2026-01-01T00:00:00");
 assert.match(toKimaiDate(new Date()), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+
+// "Continue" list: same project, different activity or description → separate tasks.
+const entry = (
+  id: number,
+  begin: string,
+  project: number,
+  activity: number,
+  description: string | null,
+  end: string | null = "2026-07-26T12:00:00+02:00",
+) => ({ id, begin, end, description, project: { id: project }, activity: { id: activity } });
+
+const history = [
+  entry(1, "2026-07-26T09:00:00+02:00", 10, 20, "Konzeption"),
+  entry(2, "2026-07-26T10:00:00+02:00", 10, 21, "Umsetzung"), // same project, other activity
+  entry(3, "2026-07-26T11:00:00+02:00", 10, 20, "Review"), // same project+activity, other description
+  entry(4, "2026-07-26T08:00:00+02:00", 10, 20, "konzeption "), // duplicate of 1 modulo case/space
+  entry(5, "2026-07-26T12:00:00+02:00", 11, 22, null, null), // running → excluded
+  entry(6, "2026-07-25T09:00:00+02:00", 12, 23, "Buchhaltung"),
+];
+
+assert.deepEqual(
+  recentTasks(history, 4).map((e) => e.id),
+  [3, 2, 1, 6],
+  "newest first, running excluded, case-insensitive duplicate dropped",
+);
+assert.equal(recentTasks(history, 2).length, 2);
+assert.deepEqual(recentTasks([], 4), []);
+// Entries missing a project or activity must not merge into one "?|?|" bucket by accident.
+assert.notEqual(
+  taskKey(entry(7, "2026-07-26T09:00:00+02:00", 10, 20, "A")),
+  taskKey(entry(8, "2026-07-26T09:00:00+02:00", 10, 20, "B")),
+);
 
 // A URL entered with /api produced 404s on every call — must normalise back to the root.
 assert.equal(normalizeBaseUrl("https://kimai.example.com/api"), "https://kimai.example.com");

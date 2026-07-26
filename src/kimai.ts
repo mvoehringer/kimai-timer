@@ -1,5 +1,5 @@
 import { getPreferenceValues } from "@raycast/api";
-import { normalizeBaseUrl, toKimaiDate } from "./format";
+import { normalizeBaseUrl, recentTasks, toKimaiDate } from "./format";
 
 export interface Customer {
   id: number;
@@ -102,9 +102,13 @@ const byName = <T extends { name: string }>(items: T[]) =>
 
 export const getActiveTimers = () => api<Timesheet[]>("/timesheets/active");
 
-/** Last worked-on entries, one per project/activity combination — the basis for "continue". */
-export const getRecentTimesheets = (size = 5) =>
-  api<Timesheet[]>("/timesheets/recent", undefined, { size });
+/**
+ * The last tasks worked on, for "continue". Deliberately not `/timesheets/recent`: that
+ * endpoint keeps one entry per project + activity, so two tasks with different
+ * descriptions on the same project would collapse into a single menu entry.
+ */
+export const getResumableTasks = async (count: number) =>
+  recentTasks(await listTimesheets({ size: 50 }), count);
 
 export const listTimesheets = (query: Query = {}) =>
   api<Timesheet[]>("/timesheets", undefined, {
@@ -116,8 +120,19 @@ export const listTimesheets = (query: Query = {}) =>
 export const stopTimer = (id: number) =>
   api<Timesheet>(`/timesheets/${id}/stop`, { method: "PATCH" });
 
-export const restartTimer = (id: number) =>
-  api<Timesheet>(`/timesheets/${id}/restart`, { method: "PATCH" });
+/**
+ * Kimai can be configured to allow several timers at once. This extension keeps exactly
+ * one running, so every start stops what was running before. Returns the stopped entries.
+ */
+export async function stopRunningTimers(): Promise<Timesheet[]> {
+  const active = await getActiveTimers();
+  return Promise.all(active.map((entry) => stopTimer(entry.id)));
+}
+
+export const restartTimer = async (id: number) => {
+  await stopRunningTimers();
+  return api<Timesheet>(`/timesheets/${id}/restart`, { method: "PATCH" });
+};
 
 export const duplicateTimesheet = (id: number) =>
   api<Timesheet>(`/timesheets/${id}/duplicate`, { method: "PATCH" });
@@ -142,18 +157,20 @@ function serialize(input: TimesheetInput) {
   };
 }
 
-export const startTimer = (
+export const startTimer = async (
   project: number,
   activity: number,
   description?: string,
   tags?: string,
-) =>
-  api<Timesheet>("/timesheets", {
+) => {
+  await stopRunningTimers();
+  return api<Timesheet>("/timesheets", {
     method: "POST",
     body: JSON.stringify(
       serialize({ begin: new Date(), project, activity, description, tags }),
     ),
   });
+};
 
 export const updateTimesheet = (id: number, input: TimesheetInput) =>
   api<Timesheet>(`/timesheets/${id}`, {

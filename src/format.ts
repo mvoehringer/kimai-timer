@@ -16,6 +16,51 @@ export function normalizeBaseUrl(input: string): string {
   return withScheme.replace(/\/+$/, "").replace(/\/api(\/doc)?$/i, "");
 }
 
+export interface TaskLike {
+  begin: string;
+  end?: string | null;
+  description?: string | null;
+  project?: { id: number } | null;
+  activity?: { id: number } | null;
+}
+
+/**
+ * What makes two entries "the same task": project, activity AND description. Kimai's own
+ * `/timesheets/recent` keys on project + activity only, which merges two different pieces
+ * of work on the same project into one entry.
+ */
+export function taskKey(entry: TaskLike): string {
+  return [
+    entry.project?.id ?? "?",
+    entry.activity?.id ?? "?",
+    entry.description?.trim().toLowerCase() ?? "",
+  ].join("|");
+}
+
+/** The newest finished entry per distinct task, most recent first. */
+export function recentTasks<T extends TaskLike>(
+  entries: T[],
+  count: number,
+): T[] {
+  const sorted = [...entries].sort(
+    (a, b) => Date.parse(b.begin) - Date.parse(a.begin),
+  );
+  const seen = new Set<string>();
+  const tasks: T[] = [];
+
+  for (const entry of sorted) {
+    // A running entry already has its own section in the menu bar.
+    if (!entry.end) continue;
+    const key = taskKey(entry);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tasks.push(entry);
+    if (tasks.length === count) break;
+  }
+
+  return tasks;
+}
+
 /**
  * Kimai returns ISO 8601 but expects HTML5 "local date and time" on POST/PATCH:
  * `yyyy-MM-ddTHH:mm:ss` with no timezone. Sending a real ISO string here shifts
