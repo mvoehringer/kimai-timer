@@ -19,6 +19,15 @@ export function formatDuration(seconds: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
 }
 
+/**
+ * Seconds → `1:02` (h:mm). For the menu bar, which only refreshes once a minute —
+ * a ticking seconds display there would just be wrong most of the time.
+ */
+export function formatClock(seconds: number): string {
+  const m = Math.floor(Math.max(0, seconds) / 60);
+  return `${Math.floor(m / 60)}:${pad(m % 60)}`;
+}
+
 /** Seconds → `2h 15m`, for totals where seconds are noise. */
 export function formatTotal(seconds: number): string {
   const h = Math.floor(Math.max(0, seconds) / 3600);

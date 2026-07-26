@@ -39,12 +39,18 @@ interface Preferences {
 
 const prefs = getPreferenceValues<Preferences>();
 
-/** Trailing slashes and a missing scheme are the two things people paste wrong. */
+/**
+ * People paste the instance root, a trailing slash, a bare hostname, or the URL of the
+ * API docs. Everything below normalises to the root, because `/api` is appended per call.
+ */
 export const baseUrl = (
   prefs.baseUrl.match(/^https?:\/\//)
     ? prefs.baseUrl
     : `https://${prefs.baseUrl}`
-).replace(/\/+$/, "");
+)
+  .trim()
+  .replace(/\/+$/, "")
+  .replace(/\/api(\/doc)?$/, "");
 
 type Query = Record<string, string | number | boolean | undefined>;
 
@@ -58,11 +64,15 @@ function withQuery(path: string, query?: Query): string {
   return qs ? `${path}?${qs}` : path;
 }
 
-async function toError(res: Response): Promise<Error> {
+async function toError(res: Response, url: string): Promise<Error> {
   if (res.status === 401 || res.status === 403) {
     return new Error(
       "Kimai rejected the API token — check it under User → API Access",
     );
+  }
+  if (res.status === 404) {
+    // A wrong "Kimai URL" preference looks exactly like this; the token would give 401.
+    return new Error(`Not found: ${url} — check the Kimai URL preference`);
   }
   const body = await res.text().catch(() => "");
   let detail = body;
@@ -73,7 +83,7 @@ async function toError(res: Response): Promise<Error> {
     // Not JSON (nginx error page, redirect to a login form) — keep the raw text.
   }
   return new Error(
-    `Kimai ${res.status}: ${detail.slice(0, 200) || res.statusText}`,
+    `Kimai ${res.status} on ${url}: ${detail.slice(0, 200) || res.statusText}`,
   );
 }
 
@@ -82,7 +92,8 @@ async function api<T>(
   init?: RequestInit,
   query?: Query,
 ): Promise<T> {
-  const res = await fetch(`${baseUrl}/api${withQuery(path, query)}`, {
+  const url = `${baseUrl}/api${withQuery(path, query)}`;
+  const res = await fetch(url, {
     ...init,
     headers: {
       Authorization: `Bearer ${prefs.apiToken}`,
@@ -90,7 +101,7 @@ async function api<T>(
       ...init?.headers,
     },
   });
-  if (!res.ok) throw await toError(res);
+  if (!res.ok) throw await toError(res, url);
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }

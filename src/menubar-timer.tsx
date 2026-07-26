@@ -16,7 +16,7 @@ import {
   timesheetSubtitle,
   timesheetTitle,
 } from "./kimai";
-import { formatDuration } from "./format";
+import { formatClock, formatDuration } from "./format";
 
 export default function Command() {
   const { data, isLoading, revalidate } = useCachedPromise(
@@ -50,7 +50,7 @@ export default function Command() {
   return (
     <MenuBarExtra
       icon={running ? Icon.Stopwatch : Icon.Clock}
-      title={running ? formatDuration(elapsedSeconds(running)) : undefined}
+      title={running ? formatClock(elapsedSeconds(running)) : undefined}
       tooltip={running ? timesheetSubtitle(running) : "No running timer"}
       isLoading={isLoading}
     >
@@ -58,7 +58,7 @@ export default function Command() {
         <MenuBarExtra.Section key={entry.id} title={timesheetTitle(entry)}>
           <MenuBarExtra.Item
             icon={Icon.Stop}
-            title={`Stop · ${formatDuration(elapsedSeconds(entry))}`}
+            title={`Stop · ${formatClock(elapsedSeconds(entry))}`}
             subtitle={timesheetSubtitle(entry)}
             onAction={() => stop(entry.id)}
           />
