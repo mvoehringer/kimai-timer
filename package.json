@@ -2,7 +2,7 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "kimai-timer",
   "title": "Kimai Timer",
-  "description": "Track time in Kimai without leaving Raycast: start/stop timers, browse and edit timesheets, and see weekly totals.",
+  "description": "Track your time in Kimai without leaving Raycast.",
   "icon": "icon.png",
   "author": "mvoehringer",
   "categories": ["Productivity"],

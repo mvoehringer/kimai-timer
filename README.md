@@ -55,6 +55,15 @@ bun run dev        # loads the extension into Raycast
 `src/kimai.ts` is the only place that talks to the network. `src/format.ts` holds the pure
 helpers so they stay testable outside Raycast.
 
+### Publishing to the Raycast Store
+
+Left to do: put 3–6 screenshots into `metadata/` (see the note in that folder), then fork
+`raycast/extensions`, copy this extension to `extensions/kimai-timer/` and open a PR.
+`ray publish` is for private team stores, not the public one.
+
+`package-lock.json` is committed on purpose — the Store CI builds with npm, even though
+local development uses bun.
+
 ### One gotcha worth knowing
 
 Kimai *returns* ISO 8601 timestamps but *expects* HTML5 local date-time (`yyyy-MM-ddTHH:mm:ss`,
