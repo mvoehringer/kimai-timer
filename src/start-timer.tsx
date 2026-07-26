@@ -126,7 +126,6 @@ export function StartTimerForm({
         title="Project"
         value={project}
         onChange={setProject}
-        storeValue={false}
       >
         {projects.data?.map((p) => (
           <Form.Dropdown.Item

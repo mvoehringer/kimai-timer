@@ -40,7 +40,12 @@ export default function Command() {
     },
   );
 
-  const groups = groupByDay(data ?? []);
+  // Last tracked first, like the menu bar; a running entry (no end) counts as "now".
+  const lastTracked = (entry: Timesheet) =>
+    entry.end ? Date.parse(entry.end) : Number.MAX_SAFE_INTEGER;
+  const groups = groupByDay(
+    [...(data ?? [])].sort((a, b) => lastTracked(b) - lastTracked(a)),
+  );
 
   return (
     <List
@@ -120,8 +125,9 @@ function TimesheetItem({
           ? { source: Icon.Stopwatch, tintColor: Color.Green }
           : Icon.Clock
       }
-      title={timesheetTitle(entry)}
-      subtitle={timesheetSubtitle(entry)}
+      // Same shape as the menu bar: customer · project · activity, comment dimmed.
+      title={timesheetSubtitle(entry) || timesheetTitle(entry)}
+      subtitle={entry.description?.trim() || undefined}
       accessories={[
         ...(entry.tags ?? []).map((tag) => ({ tag })),
         { text: formatDuration(elapsedSeconds(entry)) },
@@ -277,7 +283,8 @@ function groupByDay(entries: Timesheet[]): [string, Timesheet[]][] {
   const groups = new Map<string, Timesheet[]>();
 
   for (const entry of entries) {
-    const day = startOfDay(new Date(entry.begin));
+    // Group by when tracking ended so the day sections match the end-based sort order.
+    const day = startOfDay(new Date(entry.end ?? entry.begin));
     const diffDays = Math.round((today - day.getTime()) / 86_400_000);
     const label =
       diffDays === 0

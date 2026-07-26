@@ -67,7 +67,7 @@ export default function Command() {
       refresh();
       await showHUD(`⏹ Stopped after ${formatDuration(stopped.duration)}`);
     } catch (error) {
-      await showHUD(`⚠︎ $"Could not stop the timer" — ${describe(error)}`);
+      await showHUD(`⚠︎ Could not stop the timer — ${describe(error)}`);
     }
   }
 
@@ -77,7 +77,7 @@ export default function Command() {
       refresh();
       await showHUD(`▶ ${label}`);
     } catch (error) {
-      await showHUD(`⚠︎ $"Could not continue this task" — ${describe(error)}`);
+      await showHUD(`⚠︎ Could not continue this task — ${describe(error)}`);
     }
   }
 
@@ -103,7 +103,7 @@ export default function Command() {
           />
         </MenuBarExtra.Section>
       ))}
-      {(recent.data ?? []).length > 0 && (
+      {recent.data?.length ? (
         <MenuBarExtra.Section title="Continue">
           {recent.data?.map((entry) => {
             // timesheetTitle guarantees a non-empty label when the entities are missing.
@@ -123,12 +123,22 @@ export default function Command() {
               />
             );
           })}
+          <MenuBarExtra.Item
+            icon={Icon.List}
+            title="Recent Entries…"
+            onAction={() =>
+              launchCommand({
+                name: "timesheets",
+                type: LaunchType.UserInitiated,
+              })
+            }
+          />
         </MenuBarExtra.Section>
-      )}
+      ) : null}
       <MenuBarExtra.Section>
         <MenuBarExtra.Item
           icon={Icon.Play}
-          title="Start Timer…"
+          title="Start New Timer…"
           onAction={() =>
             launchCommand({
               name: "start-timer",

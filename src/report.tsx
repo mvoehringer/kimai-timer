@@ -11,7 +11,6 @@ import {
   toKimaiDate,
 } from "./format";
 
-// Titles are looked up lazily so nothing is baked in beyond the dictionary itself.
 const RANGES = {
   today: { title: "Today", from: startOfDay },
   week: { title: "This Week", from: startOfWeek },

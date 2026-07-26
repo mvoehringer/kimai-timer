@@ -1,7 +1,7 @@
 import { getPreferenceValues } from "@raycast/api";
 import { normalizeBaseUrl, recentTasks, toKimaiDate } from "./format";
 
-export interface Customer {
+interface Customer {
   id: number;
   name: string;
 }
@@ -13,7 +13,7 @@ export interface Project {
   customer: number | Customer;
 }
 
-export interface Activity {
+interface Activity {
   id: number;
   name: string;
   project: number | null;
@@ -140,7 +140,7 @@ export const duplicateTimesheet = (id: number) =>
 export const deleteTimesheet = (id: number) =>
   api<void>(`/timesheets/${id}`, { method: "DELETE" });
 
-export interface TimesheetInput {
+interface TimesheetInput {
   begin?: Date;
   end?: Date | null;
   project?: number;

@@ -37,20 +37,23 @@ export function taskKey(entry: TaskLike): string {
   ].join("|");
 }
 
-/** The newest finished entry per distinct task, most recent first. */
+/**
+ * The newest finished entry per distinct task, last tracked first. Sorted by `end`,
+ * not `begin`: an edited or duplicated entry can carry an old begin, but "last
+ * tracked" is when work on the task actually stopped.
+ */
 export function recentTasks<T extends TaskLike>(
   entries: T[],
   count: number,
 ): T[] {
-  const sorted = [...entries].sort(
-    (a, b) => Date.parse(b.begin) - Date.parse(a.begin),
-  );
+  const sorted = entries
+    // A running entry already has its own section in the menu bar.
+    .filter((entry) => entry.end)
+    .sort((a, b) => Date.parse(b.end ?? "") - Date.parse(a.end ?? ""));
   const seen = new Set<string>();
   const tasks: T[] = [];
 
   for (const entry of sorted) {
-    // A running entry already has its own section in the menu bar.
-    if (!entry.end) continue;
     const key = taskKey(entry);
     if (seen.has(key)) continue;
     seen.add(key);

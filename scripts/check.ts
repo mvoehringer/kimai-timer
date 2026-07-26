@@ -24,7 +24,7 @@ const entry = (
   project: number,
   activity: number,
   description: string | null,
-  end: string | null = "2026-07-26T12:00:00+02:00",
+  end: string | null = begin, // zero-length entry: end order matches begin order
 ) => ({ id, begin, end, description, project: { id: project }, activity: { id: activity } });
 
 const history = [
@@ -43,6 +43,16 @@ assert.deepEqual(
 );
 assert.equal(recentTasks(history, 2).length, 2);
 assert.deepEqual(recentTasks([], 4), []);
+// Sorted by end, not begin: an entry edited to an old begin but finished last tops the list.
+const edited = entry(
+  9,
+  "2026-07-26T07:00:00+02:00",
+  13,
+  24,
+  "Editiert",
+  "2026-07-26T13:00:00+02:00",
+);
+assert.equal(recentTasks([...history, edited], 4)[0].id, 9);
 // Entries missing a project or activity must not merge into one "?|?|" bucket by accident.
 assert.notEqual(
   taskKey(entry(7, "2026-07-26T09:00:00+02:00", 10, 20, "A")),
