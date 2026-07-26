@@ -2,6 +2,7 @@ import { Icon, List } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState } from "react";
 import { customerName, elapsedSeconds, listTimesheets } from "./kimai";
+import { t } from "./i18n";
 import {
   endOfDay,
   formatTotal,
@@ -12,9 +13,9 @@ import {
 } from "./format";
 
 const RANGES = {
-  today: { title: "Today", from: startOfDay },
-  week: { title: "This Week", from: startOfWeek },
-  month: { title: "This Month", from: startOfMonth },
+  today: { title: t.today, from: startOfDay },
+  week: { title: t.thisWeek, from: startOfWeek },
+  month: { title: t.thisMonth, from: startOfMonth },
 } as const;
 
 type RangeKey = keyof typeof RANGES;
@@ -32,7 +33,7 @@ async function loadRange(range: RangeKey) {
     const key =
       [customerName(entry.project), entry.project?.name]
         .filter(Boolean)
-        .join(" · ") || "Unknown project";
+        .join(" · ") || t.unknownProject;
     const current = totals.get(key) ?? { seconds: 0, entries: 0 };
     totals.set(key, {
       seconds: current.seconds + elapsedSeconds(entry),
@@ -50,16 +51,16 @@ export default function Command() {
   const [range, setRange] = useState<RangeKey>("week");
   const { data, isLoading } = useCachedPromise(loadRange, [range], {
     keepPreviousData: true,
-    failureToastOptions: { title: "Could not load the report" },
+    failureToastOptions: { title: t.couldNotLoadReport },
   });
 
   return (
     <List
       isLoading={isLoading}
-      searchBarPlaceholder="Filter projects…"
+      searchBarPlaceholder={t.filterProjects}
       searchBarAccessory={
         <List.Dropdown
-          tooltip="Time range"
+          tooltip={t.timeRange}
           value={range}
           onChange={(value) => setRange(value as RangeKey)}
         >
@@ -69,10 +70,7 @@ export default function Command() {
         </List.Dropdown>
       }
     >
-      <List.EmptyView
-        icon={Icon.BarChart}
-        title="No time tracked in this range"
-      />
+      <List.EmptyView icon={Icon.BarChart} title={t.noTimeTracked} />
       <List.Section
         title={RANGES[range].title}
         subtitle={data ? formatTotal(data.total) : undefined}
@@ -82,7 +80,7 @@ export default function Command() {
             key={project}
             icon={Icon.BarChart}
             title={project}
-            subtitle={`${entries} ${entries === 1 ? "entry" : "entries"}`}
+            subtitle={t.entryCount(entries)}
             accessories={[{ text: formatTotal(seconds) }]}
           />
         ))}

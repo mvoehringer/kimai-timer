@@ -22,6 +22,16 @@ Track time in [Kimai](https://www.kimai.org) without leaving Raycast.
 
 Kimai requires HTTPS for API calls. A trailing `/api` in the URL is stripped automatically.
 
+## Language
+
+German and English. The language follows your system locale — there is no setting, because
+Raycast has no localisation layer and officially supports US English only. All texts live in
+`src/i18n.ts`: the English dictionary defines the shape, the German one is typed against it,
+so a missing key is a compile error rather than an untranslated string at runtime.
+
+Command names, descriptions and preference labels stay English — they come from
+`package.json`, which Raycast reads before any code runs.
+
 ## Behaviour worth knowing
 
 - **One timer at a time.** Starting or continuing a task stops whatever was running before,

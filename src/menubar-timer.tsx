@@ -21,6 +21,7 @@ import {
   timesheetTitle,
 } from "./kimai";
 import { formatClock, formatDuration, formatHm } from "./format";
+import { t } from "./i18n";
 
 const RECENT_COUNT = 4;
 
@@ -65,9 +66,9 @@ export default function Command() {
     try {
       const stopped = await stopTimer(entry.id);
       refresh();
-      await showHUD(`⏹ Stopped after ${formatDuration(stopped.duration)}`);
+      await showHUD(`⏹ ${t.stoppedAfter(formatDuration(stopped.duration))}`);
     } catch (error) {
-      await showHUD(`⚠︎ Could not stop the timer — ${describe(error)}`);
+      await showHUD(`⚠︎ ${t.couldNotStop} — ${describe(error)}`);
     }
   }
 
@@ -77,7 +78,7 @@ export default function Command() {
       refresh();
       await showHUD(`▶ ${label}`);
     } catch (error) {
-      await showHUD(`⚠︎ Could not continue this task — ${describe(error)}`);
+      await showHUD(`⚠︎ ${t.couldNotContinue} — ${describe(error)}`);
     }
   }
 
@@ -86,7 +87,7 @@ export default function Command() {
       // Untinted so macOS renders it as a template image in both appearances.
       icon={running ? Icon.Stopwatch : Icon.Clock}
       title={running ? formatHm(elapsedSeconds(running)) : undefined}
-      tooltip={running ? timesheetSubtitle(running) : "No running timer"}
+      tooltip={running ? timesheetSubtitle(running) : t.noRunningTimer}
       isLoading={isLoading}
     >
       {data?.map((entry) => (
@@ -98,19 +99,19 @@ export default function Command() {
           />
           <MenuBarExtra.Item
             icon={{ source: Icon.Stop, tintColor: Color.Red }}
-            title="Stop"
+            title={t.stop}
             onAction={() => stop(entry)}
           />
         </MenuBarExtra.Section>
       ))}
       {(recent.data ?? []).length > 0 && (
-        <MenuBarExtra.Section title="Continue">
+        <MenuBarExtra.Section title={t.continueSection}>
           {recent.data?.map((entry) => (
             <MenuBarExtra.Item
               key={entry.id}
               icon={{ source: Icon.ArrowClockwise, tintColor: Color.Green }}
-              title={timesheetTitle(entry)}
-              subtitle={timesheetSubtitle(entry)}
+              title={timesheetSubtitle(entry)}
+              subtitle={entry.description?.trim() || undefined}
               onAction={() => resume(entry.id, timesheetSubtitle(entry))}
             />
           ))}
@@ -119,7 +120,7 @@ export default function Command() {
       <MenuBarExtra.Section>
         <MenuBarExtra.Item
           icon={Icon.Play}
-          title="Start Timer…"
+          title={t.startTimerEllipsis}
           onAction={() =>
             launchCommand({
               name: "start-timer",
@@ -129,7 +130,7 @@ export default function Command() {
         />
         <MenuBarExtra.Item
           icon={Icon.List}
-          title="Timesheets…"
+          title={t.timesheetsEllipsis}
           onAction={() =>
             launchCommand({
               name: "timesheets",
@@ -139,7 +140,7 @@ export default function Command() {
         />
         <MenuBarExtra.Item
           icon={Icon.Globe}
-          title="Open Kimai"
+          title={t.openKimai}
           onAction={() => open(baseUrl)}
         />
       </MenuBarExtra.Section>

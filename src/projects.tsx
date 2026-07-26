@@ -15,23 +15,24 @@ import {
   listProjectsWithCustomers,
   startTimer,
 } from "./kimai";
+import { t } from "./i18n";
 import { StartTimerForm } from "./start-timer";
 import { refreshMenuBar } from "./stop-timer";
 
 export default function Command() {
   const { data, isLoading } = useCachedPromise(listProjectsWithCustomers, [], {
-    failureToastOptions: { title: "Could not load projects" },
+    failureToastOptions: { title: t.couldNotLoadProjects },
   });
 
   const sections = new Map<string, Project[]>();
   for (const project of data ?? []) {
-    const customer = customerName(project) ?? "Without customer";
+    const customer = customerName(project) ?? t.withoutCustomer;
     sections.set(customer, [...(sections.get(customer) ?? []), project]);
   }
 
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search projects…">
-      <List.EmptyView icon={Icon.Folder} title="No visible projects" />
+    <List isLoading={isLoading} searchBarPlaceholder={t.searchProjects}>
+      <List.EmptyView icon={Icon.Folder} title={t.noVisibleProjects} />
       {[...sections.entries()].map(([customer, projects]) => (
         <List.Section key={customer} title={customer}>
           {projects.map((project) => (
@@ -43,12 +44,12 @@ export default function Command() {
                 <ActionPanel>
                   <Action.Push
                     icon={Icon.ArrowRight}
-                    title="Show Activities"
+                    title={t.showActivities}
                     target={<Activities project={project} />}
                   />
                   <Action.Push
                     icon={Icon.Play}
-                    title="Start Timer…"
+                    title={t.startTimerEllipsis}
                     target={<StartTimerForm projectId={project.id} />}
                   />
                 </ActionPanel>
@@ -63,25 +64,25 @@ export default function Command() {
 
 function Activities({ project }: { project: Project }) {
   const { data, isLoading } = useCachedPromise(listActivities, [project.id], {
-    failureToastOptions: { title: "Could not load activities" },
+    failureToastOptions: { title: t.couldNotLoadActivities },
   });
 
   async function start(activityId: number) {
     try {
       await showToast({
         style: Toast.Style.Animated,
-        title: "Starting timer…",
+        title: t.startingTimer,
       });
       await startTimer(project.id, activityId);
       await showToast({
         style: Toast.Style.Success,
-        title: "Timer started",
+        title: t.timerStarted,
         message: project.name,
       });
       await refreshMenuBar();
       await popToRoot();
     } catch (error) {
-      await showFailureToast(error, { title: "Could not start the timer" });
+      await showFailureToast(error, { title: t.couldNotStart });
     }
   }
 
@@ -89,25 +90,25 @@ function Activities({ project }: { project: Project }) {
     <List
       isLoading={isLoading}
       navigationTitle={project.name}
-      searchBarPlaceholder="Search activities…"
+      searchBarPlaceholder={t.searchActivities}
     >
-      <List.EmptyView icon={Icon.Tag} title="No activities for this project" />
+      <List.EmptyView icon={Icon.Tag} title={t.noActivities} />
       {data?.map((activity) => (
         <List.Item
           key={activity.id}
           icon={Icon.Tag}
           title={activity.name}
-          subtitle={activity.project ? undefined : "Global"}
+          subtitle={activity.project ? undefined : t.globalActivity}
           actions={
             <ActionPanel>
               <Action
                 icon={Icon.Play}
-                title="Start Timer"
+                title={t.startTimer}
                 onAction={() => start(activity.id)}
               />
               <Action.Push
                 icon={Icon.Pencil}
-                title="Start with Description…"
+                title={t.startWithDescription}
                 target={
                   <StartTimerForm
                     projectId={project.id}
