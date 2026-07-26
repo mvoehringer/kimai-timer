@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   formatClock,
   formatDuration,
+  formatHm,
   formatTotal,
   normalizeBaseUrl,
   recentTasks,
@@ -75,6 +76,12 @@ assert.equal(formatClock(3723), "1:02:03");
 assert.equal(formatClock(-10), "0:00:00");
 assert.equal(formatClock(undefined as unknown as number), "0:00:00");
 assert.equal(formatClock(NaN), "0:00:00");
+
+// Menu bar title: hours and minutes only, seconds truncated (never rounded up).
+assert.equal(formatHm(0), "0:00");
+assert.equal(formatHm(59), "0:00");
+assert.equal(formatHm(3723), "1:02");
+assert.equal(formatHm(NaN), "0:00");
 
 assert.equal(formatTotal(0), "0m");
 assert.equal(formatTotal(3600 * 2 + 900), "2h 15m");

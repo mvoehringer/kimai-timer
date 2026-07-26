@@ -13,6 +13,7 @@ import {
   useCachedPromise,
   useLocalStorage,
 } from "@raycast/utils";
+import { useEffect, useState } from "react";
 import {
   Timesheet,
   baseUrl,
@@ -24,7 +25,7 @@ import {
   timesheetSubtitle,
   timesheetTitle,
 } from "./kimai";
-import { formatClock, formatDuration } from "./format";
+import { formatClock, formatDuration, formatHm } from "./format";
 
 const RECENT_COUNT = 4;
 
@@ -37,17 +38,30 @@ interface PausedTask {
   duration: number;
 }
 
-/** Three distinguishable states at a glance: running, paused, idle. */
+/**
+ * Menu bar icons stay untinted so macOS can render them as template images in both
+ * appearances — colour belongs inside the open menu, not in the status bar.
+ */
 function menuBarIcon(
   running: Timesheet | undefined,
   paused: PausedTask | undefined,
 ) {
-  if (running) return { source: Icon.Stopwatch, tintColor: Color.Green };
-  if (paused) return { source: Icon.Pause, tintColor: Color.Yellow };
-  return { source: Icon.Clock, tintColor: Color.SecondaryText };
+  if (running) return Icon.Stopwatch;
+  if (paused) return Icon.Pause;
+  return Icon.Clock;
+}
+
+/** Re-render once a second so the elapsed time ticks while the menu is open. */
+function useTicker() {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((tick) => tick + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 }
 
 export default function Command() {
+  useTicker();
   const { data, isLoading, revalidate } = useCachedPromise(
     getActiveTimers,
     [],
@@ -142,8 +156,8 @@ export default function Command() {
       icon={menuBarIcon(running, pausedTask)}
       title={
         running
-          ? formatClock(elapsedSeconds(running))
-          : pausedTask && formatClock(pausedTask.duration)
+          ? formatHm(elapsedSeconds(running))
+          : pausedTask && formatHm(pausedTask.duration)
       }
       tooltip={
         running
@@ -157,13 +171,17 @@ export default function Command() {
       {data?.map((entry) => (
         <MenuBarExtra.Section key={entry.id} title={timesheetTitle(entry)}>
           <MenuBarExtra.Item
-            icon={Icon.Pause}
-            title={`Pause · ${formatClock(elapsedSeconds(entry))}`}
+            icon={{ source: Icon.Stopwatch, tintColor: Color.Green }}
+            title={formatClock(elapsedSeconds(entry))}
             subtitle={timesheetSubtitle(entry)}
+          />
+          <MenuBarExtra.Item
+            icon={{ source: Icon.Pause, tintColor: Color.Yellow }}
+            title="Pause"
             onAction={() => pause(entry)}
           />
           <MenuBarExtra.Item
-            icon={Icon.Stop}
+            icon={{ source: Icon.Stop, tintColor: Color.Red }}
             title="Stop"
             onAction={() => stop(entry)}
           />

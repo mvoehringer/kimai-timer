@@ -31,7 +31,7 @@
       "subtitle": "Kimai",
       "description": "Show the running timer in the menu bar, pause or stop it, and continue a recent task.",
       "mode": "menu-bar",
-      "interval": "10s"
+      "interval": "1m"
     },
     {
       "name": "start-timer",

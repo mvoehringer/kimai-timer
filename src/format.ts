@@ -79,9 +79,19 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * Seconds → `0:12` (h:mm) for the menu bar title. No seconds there: the title only
+ * updates on background refresh, so a seconds display would show a stale value.
+ */
+export function formatHm(seconds: number): string {
+  const m = Number.isFinite(seconds)
+    ? Math.floor(Math.max(0, seconds) / 60)
+    : 0;
+  return `${Math.floor(m / 60)}:${pad(m % 60)}`;
+}
+
+/**
  * Seconds → `0:12:34` (h:mm:ss). Always includes the hour so `1:02` can never be read
- * as one hour two minutes. The menu bar shows seconds as proof the timer is alive; it
- * refreshes every 10s, so the value jumps in steps rather than ticking.
+ * as one hour two minutes. Used inside the open menu, which ticks once a second.
  */
 export function formatClock(seconds: number): string {
   // A paused task stored by an older version has no duration — never render NaN.
