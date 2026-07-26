@@ -94,7 +94,7 @@ export function formatHm(seconds: number): string {
  * as one hour two minutes. Used inside the open menu, which ticks once a second.
  */
 export function formatClock(seconds: number): string {
-  // A paused task stored by an older version has no duration — never render NaN.
+  // Never render NaN if a caller hands over a missing duration.
   const s = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
   return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 }

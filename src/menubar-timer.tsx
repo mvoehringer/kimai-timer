@@ -7,7 +7,7 @@ import {
   open,
   showHUD,
 } from "@raycast/api";
-import { useCachedPromise, useLocalStorage } from "@raycast/utils";
+import { useCachedPromise } from "@raycast/utils";
 import { useEffect, useState } from "react";
 import {
   Timesheet,
@@ -23,28 +23,6 @@ import {
 import { formatClock, formatDuration, formatHm } from "./format";
 
 const RECENT_COUNT = 4;
-
-/** Kimai has no pause endpoint, so a pause is a stop plus a note of what to resume. */
-interface PausedTask {
-  id: number;
-  title: string;
-  subtitle: string;
-  /** Seconds booked before pausing — shown in the menu bar so the state stays visible. */
-  duration: number;
-}
-
-/**
- * Menu bar icons stay untinted so macOS can render them as template images in both
- * appearances — colour belongs inside the open menu, not in the status bar.
- */
-function menuBarIcon(
-  running: Timesheet | undefined,
-  paused: PausedTask | undefined,
-) {
-  if (running) return Icon.Stopwatch;
-  if (paused) return Icon.Pause;
-  return Icon.Clock;
-}
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -73,12 +51,8 @@ export default function Command() {
 
   const recent = useCachedPromise(getResumableTasks, [RECENT_COUNT], {
     keepPreviousData: true,
-    // The running timer already has its own section, and a failure here must not
-    // take down the menu bar — the active timer is what matters.
     onError: () => undefined,
   });
-
-  const paused = useLocalStorage<PausedTask | undefined>("paused-task");
 
   const running = data?.[0];
 
@@ -90,7 +64,6 @@ export default function Command() {
   async function stop(entry: Timesheet) {
     try {
       const stopped = await stopTimer(entry.id);
-      await paused.removeValue();
       refresh();
       await showHUD(`⏹ Stopped after ${formatDuration(stopped.duration)}`);
     } catch (error) {
@@ -98,26 +71,9 @@ export default function Command() {
     }
   }
 
-  async function pause(entry: Timesheet) {
-    try {
-      const stopped = await stopTimer(entry.id);
-      await paused.setValue({
-        id: entry.id,
-        title: timesheetTitle(entry),
-        subtitle: timesheetSubtitle(entry),
-        duration: stopped.duration,
-      });
-      refresh();
-      await showHUD(`⏸ Paused at ${formatDuration(stopped.duration)}`);
-    } catch (error) {
-      await showHUD(`⚠︎ Could not pause the timer — ${describe(error)}`);
-    }
-  }
-
   async function resume(id: number, label: string) {
     try {
       await restartTimer(id);
-      await paused.removeValue();
       refresh();
       await showHUD(`▶ ${label}`);
     } catch (error) {
@@ -125,27 +81,12 @@ export default function Command() {
     }
   }
 
-  // A paused task gets its own entry, so keep it out of the Continue list below.
-  const resumable = (recent.data ?? []).filter(
-    (entry) => entry.id !== paused.value?.id,
-  );
-  const pausedTask = running ? undefined : paused.value;
-
   return (
     <MenuBarExtra
-      icon={menuBarIcon(running, pausedTask)}
-      title={
-        running
-          ? formatHm(elapsedSeconds(running))
-          : pausedTask && formatHm(pausedTask.duration)
-      }
-      tooltip={
-        running
-          ? timesheetSubtitle(running)
-          : pausedTask
-            ? `Paused: ${pausedTask.subtitle}`
-            : "No running timer"
-      }
+      // Untinted so macOS renders it as a template image in both appearances.
+      icon={running ? Icon.Stopwatch : Icon.Clock}
+      title={running ? formatHm(elapsedSeconds(running)) : undefined}
+      tooltip={running ? timesheetSubtitle(running) : "No running timer"}
       isLoading={isLoading}
     >
       {data?.map((entry) => (
@@ -156,35 +97,18 @@ export default function Command() {
             subtitle={timesheetSubtitle(entry)}
           />
           <MenuBarExtra.Item
-            icon={{ source: Icon.Pause, tintColor: Color.Yellow }}
-            title="Pause"
-            onAction={() => pause(entry)}
-          />
-          <MenuBarExtra.Item
             icon={{ source: Icon.Stop, tintColor: Color.Red }}
             title="Stop"
             onAction={() => stop(entry)}
           />
         </MenuBarExtra.Section>
       ))}
-      {pausedTask && (
-        <MenuBarExtra.Section
-          title={`Paused · ${formatClock(pausedTask.duration)}`}
-        >
-          <MenuBarExtra.Item
-            icon={{ source: Icon.Play, tintColor: Color.Green }}
-            title={pausedTask.title}
-            subtitle={pausedTask.subtitle}
-            onAction={() => resume(pausedTask.id, pausedTask.subtitle)}
-          />
-        </MenuBarExtra.Section>
-      )}
-      {resumable.length > 0 && (
+      {(recent.data ?? []).length > 0 && (
         <MenuBarExtra.Section title="Continue">
-          {resumable.map((entry) => (
+          {recent.data?.map((entry) => (
             <MenuBarExtra.Item
               key={entry.id}
-              icon={Icon.ArrowClockwise}
+              icon={{ source: Icon.ArrowClockwise, tintColor: Color.Green }}
               title={timesheetTitle(entry)}
               subtitle={timesheetSubtitle(entry)}
               onAction={() => resume(entry.id, timesheetSubtitle(entry))}

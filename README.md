@@ -6,7 +6,7 @@ Track time in [Kimai](https://www.kimai.org) without leaving Raycast.
 
 | Command | Mode | What it does |
 | --- | --- | --- |
-| **Running Timer** | menu bar | Elapsed time in the status bar, live `h:mm:ss` in the open menu, pause/stop, last 4 tasks to continue. |
+| **Running Timer** | menu bar | Elapsed time in the status bar, live `h:mm:ss` in the open menu, stop, last 4 tasks to continue. |
 | **Start Timer** | view | Pick project + activity, add a description and tags. Remembers your last choice. |
 | **Stop Timer** | no view | Stops every running timer, no UI. |
 | **Timesheets** | view | Browse and search entries, grouped by day. Stop, restart, duplicate, edit, delete. |
@@ -26,9 +26,10 @@ Kimai requires HTTPS for API calls. A trailing `/api` in the URL is stripped aut
 
 - **One timer at a time.** Starting or continuing a task stops whatever was running before,
   regardless of how the Kimai server itself is configured.
-- **Pause is a stop plus a bookmark.** Kimai has no pause endpoint, so pausing stops the entry
-  and pins it under "Paused" for a one-click resume. Resuming creates a new entry via
-  `/timesheets/{id}/restart` — the paused time stays booked, it is not overwritten.
+- **No pause, by design.** Kimai models an entry as `begin` + `end` and has no paused state.
+  A pause would either book the break as work (by backdating `begin`) or be nothing more than
+  a stop. So: stop the timer, and start it again from "Continue" — each stretch of work stays
+  a separate, truthful entry.
 - **The menu bar command uses HUDs, not toasts.** Raycast throws
   `Toast API is not available when command is launched in background` if a menu item action
   runs in a menu that was rendered by a background refresh — which is the normal case. Every
