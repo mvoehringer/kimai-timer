@@ -8,7 +8,6 @@ import {
   showHUD,
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
-import { useEffect, useState } from "react";
 import {
   Timesheet,
   baseUrl,
@@ -27,17 +26,10 @@ const RECENT_COUNT = 4;
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
-/** Re-render once a second so the elapsed time ticks while the menu is open. */
-function useTicker() {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setTick((tick) => tick + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
-}
-
+// ponytail: no per-second ticker. A setInterval keeps the menu bar command running
+// forever, Raycast kills it after a timeout and every later launch then fails with
+// "Missing executable". The elapsed time is resolved each time the menu opens instead.
 export default function Command() {
-  useTicker();
   const { data, isLoading, revalidate } = useCachedPromise(
     getActiveTimers,
     [],
