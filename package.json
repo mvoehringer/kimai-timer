@@ -4,7 +4,7 @@
   "title": "Kimai",
   "description": "Track time in Kimai without leaving Raycast: start/stop timers, browse and edit timesheets, and see weekly totals.",
   "icon": "icon.png",
-  "author": "michaelvohringer",
+  "author": "mvoehringer",
   "categories": ["Productivity"],
   "license": "MIT",
   "preferences": [
