@@ -67,12 +67,12 @@ assert.equal(formatDuration(59), "0:59");
 assert.equal(formatDuration(3723), "1:02:03");
 assert.equal(formatDuration(-10), "0:00");
 
-// Menu bar: hours and minutes only, seconds truncated (never rounded up).
-assert.equal(formatClock(0), "0:00");
-assert.equal(formatClock(59), "0:00");
-assert.equal(formatClock(60), "0:01");
-assert.equal(formatClock(3723), "1:02");
-assert.equal(formatClock(-10), "0:00");
+// Menu bar: always h:mm:ss, so 1:02 can never be misread as one hour two minutes.
+assert.equal(formatClock(0), "0:00:00");
+assert.equal(formatClock(59), "0:00:59");
+assert.equal(formatClock(62), "0:01:02");
+assert.equal(formatClock(3723), "1:02:03");
+assert.equal(formatClock(-10), "0:00:00");
 
 assert.equal(formatTotal(0), "0m");
 assert.equal(formatTotal(3600 * 2 + 900), "2h 15m");

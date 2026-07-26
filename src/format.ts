@@ -79,12 +79,13 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * Seconds → `1:02` (h:mm). For the menu bar, which only refreshes once a minute —
- * a ticking seconds display there would just be wrong most of the time.
+ * Seconds → `0:12:34` (h:mm:ss). Always includes the hour so `1:02` can never be read
+ * as one hour two minutes. The menu bar shows seconds as proof the timer is alive; it
+ * refreshes every 10s, so the value jumps in steps rather than ticking.
  */
 export function formatClock(seconds: number): string {
-  const m = Math.floor(Math.max(0, seconds) / 60);
-  return `${Math.floor(m / 60)}:${pad(m % 60)}`;
+  const s = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 }
 
 /** Seconds → `2h 15m`, for totals where seconds are noise. */

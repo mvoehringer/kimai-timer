@@ -1,4 +1,5 @@
 import {
+  Color,
   Icon,
   LaunchType,
   MenuBarExtra,
@@ -7,7 +8,11 @@ import {
   open,
   showToast,
 } from "@raycast/api";
-import { showFailureToast, useCachedPromise } from "@raycast/utils";
+import {
+  showFailureToast,
+  useCachedPromise,
+  useLocalStorage,
+} from "@raycast/utils";
 import {
   Timesheet,
   baseUrl,
@@ -22,6 +27,13 @@ import {
 import { formatClock, formatDuration } from "./format";
 
 const RECENT_COUNT = 4;
+
+/** Kimai has no pause endpoint, so a pause is a stop plus a note of what to resume. */
+interface PausedTask {
+  id: number;
+  title: string;
+  subtitle: string;
+}
 
 export default function Command() {
   const { data, isLoading, revalidate } = useCachedPromise(
@@ -40,6 +52,8 @@ export default function Command() {
     onError: () => undefined,
   });
 
+  const paused = useLocalStorage<PausedTask | undefined>("paused-task");
+
   const running = data?.[0];
 
   function refresh() {
@@ -47,13 +61,14 @@ export default function Command() {
     recent.revalidate();
   }
 
-  async function stop(id: number) {
+  async function stop(entry: Timesheet) {
     try {
       await showToast({
         style: Toast.Style.Animated,
         title: "Stopping timer…",
       });
-      const stopped = await stopTimer(id);
+      const stopped = await stopTimer(entry.id);
+      await paused.removeValue();
       await showToast({
         style: Toast.Style.Success,
         title: `Stopped after ${formatDuration(stopped.duration)}`,
@@ -64,17 +79,38 @@ export default function Command() {
     }
   }
 
-  async function resume(entry: Timesheet) {
+  async function pause(entry: Timesheet) {
+    try {
+      await showToast({ style: Toast.Style.Animated, title: "Pausing…" });
+      const stopped = await stopTimer(entry.id);
+      await paused.setValue({
+        id: entry.id,
+        title: timesheetTitle(entry),
+        subtitle: timesheetSubtitle(entry),
+      });
+      await showToast({
+        style: Toast.Style.Success,
+        title: `Paused after ${formatDuration(stopped.duration)}`,
+        message: timesheetSubtitle(entry),
+      });
+      refresh();
+    } catch (error) {
+      await showFailureToast(error, { title: "Could not pause the timer" });
+    }
+  }
+
+  async function resume(id: number, label: string) {
     try {
       await showToast({
         style: Toast.Style.Animated,
         title: "Starting timer…",
       });
-      await restartTimer(entry.id);
+      await restartTimer(id);
+      await paused.removeValue();
       await showToast({
         style: Toast.Style.Success,
         title: "Timer started",
-        message: timesheetSubtitle(entry),
+        message: label,
       });
       refresh();
     } catch (error) {
@@ -82,11 +118,19 @@ export default function Command() {
     }
   }
 
-  const resumable = recent.data ?? [];
+  // A paused task gets its own entry, so keep it out of the Continue list below.
+  const resumable = (recent.data ?? []).filter(
+    (entry) => entry.id !== paused.value?.id,
+  );
+  const pausedTask = running ? undefined : paused.value;
 
   return (
     <MenuBarExtra
-      icon={running ? Icon.Stopwatch : Icon.Clock}
+      icon={
+        running
+          ? { source: Icon.Stopwatch, tintColor: Color.Green }
+          : { source: Icon.Clock, tintColor: Color.SecondaryText }
+      }
       title={running ? formatClock(elapsedSeconds(running)) : undefined}
       tooltip={running ? timesheetSubtitle(running) : "No running timer"}
       isLoading={isLoading}
@@ -94,13 +138,28 @@ export default function Command() {
       {data?.map((entry) => (
         <MenuBarExtra.Section key={entry.id} title={timesheetTitle(entry)}>
           <MenuBarExtra.Item
-            icon={Icon.Stop}
-            title={`Stop · ${formatClock(elapsedSeconds(entry))}`}
+            icon={Icon.Pause}
+            title={`Pause · ${formatClock(elapsedSeconds(entry))}`}
             subtitle={timesheetSubtitle(entry)}
-            onAction={() => stop(entry.id)}
+            onAction={() => pause(entry)}
+          />
+          <MenuBarExtra.Item
+            icon={Icon.Stop}
+            title="Stop"
+            onAction={() => stop(entry)}
           />
         </MenuBarExtra.Section>
       ))}
+      {pausedTask && (
+        <MenuBarExtra.Section title="Paused">
+          <MenuBarExtra.Item
+            icon={{ source: Icon.Play, tintColor: Color.Green }}
+            title={pausedTask.title}
+            subtitle={pausedTask.subtitle}
+            onAction={() => resume(pausedTask.id, pausedTask.subtitle)}
+          />
+        </MenuBarExtra.Section>
+      )}
       {resumable.length > 0 && (
         <MenuBarExtra.Section title="Continue">
           {resumable.map((entry) => (
@@ -109,7 +168,7 @@ export default function Command() {
               icon={Icon.ArrowClockwise}
               title={timesheetTitle(entry)}
               subtitle={timesheetSubtitle(entry)}
-              onAction={() => resume(entry)}
+              onAction={() => resume(entry.id, timesheetSubtitle(entry))}
             />
           ))}
         </MenuBarExtra.Section>

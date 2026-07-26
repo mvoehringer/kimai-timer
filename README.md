@@ -6,7 +6,7 @@ Track time in [Kimai](https://www.kimai.org) without leaving Raycast.
 
 | Command | Mode | What it does |
 | --- | --- | --- |
-| **Running Timer** | menu bar | Shows the running timer and its elapsed time, plus the last 4 tasks to continue. Refreshes every minute. |
+| **Running Timer** | menu bar | Running timer with live `h:mm:ss`, pause/stop, and the last 4 tasks to continue. Refreshes every 10s. |
 | **Start Timer** | view | Pick project + activity, add a description and tags. Remembers your last choice. |
 | **Stop Timer** | no view | Stops every running timer, no UI. |
 | **Timesheets** | view | Browse and search entries, grouped by day. Stop, restart, duplicate, edit, delete. |
@@ -26,6 +26,12 @@ Kimai requires HTTPS for API calls. A trailing `/api` in the URL is stripped aut
 
 - **One timer at a time.** Starting or continuing a task stops whatever was running before,
   regardless of how the Kimai server itself is configured.
+- **Pause is a stop plus a bookmark.** Kimai has no pause endpoint, so pausing stops the entry
+  and pins it under "Paused" for a one-click resume. Resuming creates a new entry via
+  `/timesheets/{id}/restart` — the paused time stays booked, it is not overwritten.
+- **10-second refresh.** That is Raycast's minimum background interval and the reason the
+  menu bar can show seconds at all. Raise `interval` in `package.json` if battery life matters
+  more to you than a live clock.
 - **"Continue" lists distinct tasks.** Project *and* activity *and* description, so two pieces
   of work on the same project stay separate entries. Kimai's own `/timesheets/recent` merges
   them, which is why the list is built from `/timesheets`.
