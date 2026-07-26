@@ -102,6 +102,10 @@ const byName = <T extends { name: string }>(items: T[]) =>
 
 export const getActiveTimers = () => api<Timesheet[]>("/timesheets/active");
 
+/** Last worked-on entries, one per project/activity combination — the basis for "continue". */
+export const getRecentTimesheets = (size = 5) =>
+  api<Timesheet[]>("/timesheets/recent", undefined, { size });
+
 export const listTimesheets = (query: Query = {}) =>
   api<Timesheet[]>("/timesheets", undefined, {
     full: true,
